@@ -16,8 +16,8 @@ const GoogleIcon = ({ size = 24 }: { size?: number }) => (
 
 const getstarted = () => {
   return (
-    <View>
-      <View className="h-full w-full bg-[#0a3117]">
+    <View className="flex-1 bg-[#0a3117]">
+      <View className="h-full w-full">
         <Image
           source={require("../../../assets/images/Onboarding/getStartedImage.png")}
           className="h-60 w-full opacity-60 object-contain"
@@ -45,8 +45,8 @@ const getstarted = () => {
         </Text>
 
         <View>
-          <Pressable className="mt-8 bg-green-500 rounded-full px-[30%] py-[4%]" onPress={() => router.push('/name')}>
-            <Text className="text-black font-semibold text-xl">
+          <Pressable className="mt-8 bg-green-500 rounded-full px-[30%] py-[4%] active:opacity-80" onPress={() => router.push('/name')}>
+            <Text className="text-black font-semibold text-xl ">
               Get Started
             </Text>
           </Pressable>
@@ -57,7 +57,7 @@ const getstarted = () => {
         </View>
 
         <View>
-          <Pressable className="mt-4 bg-green-500 rounded-full px-[16%] py-[4%]">
+          <Pressable className="mt-4 bg-green-500 rounded-full px-[16%] py-[4%] active:opacity-80">
             <View className="flex-row items-center gap-2">
               <GoogleIcon size={24} />
               <Text className="text-black font-semibold text-xl">
