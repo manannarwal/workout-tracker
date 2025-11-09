@@ -16,11 +16,11 @@ const gender = () => {
           <Text className="text-white text-xl text-center font-semibold">
             One Last Step
           </Text>
-          <View className="flex-row gap-2 justify-center mt-5">
-            <View className="border-b-4 border-green-500 w-[22%]"></View>
-            <View className="border-b-4 border-green-500 w-[22%]"></View>
-            <View className="border-b-4 border-green-500 w-[22%]"></View>
-            <View className="border-b-4 border-green-500 w-[22%]"></View>
+          <View className="flex-row gap-2 justify-center mt-5 -mx-3">
+            <View className="border-b-4 border-green-500 w-[22%] rounded-xl"></View>
+            <View className="border-b-4 border-green-500 w-[22%] rounded-xl"></View>
+            <View className="border-b-4 border-green-500 w-[22%] rounded-xl"></View>
+            <View className="border-b-4 border-green-500 w-[22%] rounded-xl"></View>
           </View>
           <View className="mt-8">
             <Text className="text-5xl sm:text-6xl text-white font-bold leading-tight">
@@ -34,7 +34,7 @@ const gender = () => {
             <Text className="text-white font-semibold mb-4">Gender</Text>
             <View className="gap-4">
               <Pressable 
-                className={`rounded-xl py-6 w-full max-w-md border flex-row items-center justify-between px-4 active:opacity-80 ${
+                className={`rounded-xl py-6 w-full border flex-row items-center justify-between px-4 active:opacity-80 ${
                   selectedGender === 'male' 
                     ? 'border-green-500 bg-green-700/30' 
                     : 'border-white/20 bg-green-700/10'
@@ -53,7 +53,7 @@ const gender = () => {
               </Pressable>
 
               <Pressable 
-                className={`rounded-xl py-6 w-full max-w-md border flex-row items-center justify-between px-4 active:opacity-80 ${
+                className={`rounded-xl py-6 w-full border flex-row items-center justify-between px-4 active:opacity-80 ${
                   selectedGender === 'female' 
                     ? 'border-green-500 bg-green-700/30' 
                     : 'border-white/20 bg-green-700/10'

@@ -15,11 +15,11 @@ const name = () => {
           <Text className="text-white text-xl text-center font-semibold">
             Let's Get Started
           </Text>
-          <View className="flex-row gap-2 justify-center mt-5">
-            <View className="border-b-4 border-green-500 w-[22%]"></View>
-            <View className="border-b-4 border-white w-[22%]"></View>
-            <View className="border-b-4 border-white w-[22%]"></View>
-            <View className="border-b-4 border-white w-[22%]"></View>
+          <View className="flex-row gap-2 justify-center mt-5 -mx-3">
+            <View className="border-b-4 border-green-500 w-[22%] rounded-xl"></View>
+            <View className="border-b-4 border-white w-[22%] rounded-xl"></View>
+            <View className="border-b-4 border-white w-[22%] rounded-xl"></View>
+            <View className="border-b-4 border-white w-[22%] rounded-xl"></View>
           </View>
           <View className="mt-8">
             <Text className="text-5xl sm:text-6xl text-white font-bold leading-tight">
