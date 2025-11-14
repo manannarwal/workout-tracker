@@ -11,6 +11,7 @@ interface WorkoutSet {
   id: string;
   weight: string;
   reps: string;
+  calories?: number; // Calculated calories for this set
 }
 
 interface Exercise {
@@ -27,6 +28,38 @@ interface ActiveWorkoutData {
 }
 
 const ACTIVE_WORKOUT_KEY = '@active_strength_workout';
+const COMPLETED_WORKOUTS_KEY = '@completed_workouts';
+
+// Calorie calculation constants
+const AVERAGE_BODY_WEIGHT = 70; // kg - can be customized later
+const SECONDS_PER_REP = 3;
+const REST_SECONDS = 3;
+
+// Calculate calories burned for a single set
+const calculateSetCalories = (weight: string, reps: string): number => {
+  const weightNum = parseFloat(weight) || 0;
+  const repsNum = parseInt(reps) || 0;
+  
+  if (weightNum === 0 || repsNum === 0) return 0;
+  
+  // Determine MET value based on intensity
+  let met = 5.0; // Default to moderate
+  
+  if (weightNum > 50 && repsNum <= 6) {
+    met = 6.0; // Vigorous: heavy weight, low reps
+  } else if (weightNum < 20 || repsNum > 12) {
+    met = 3.5; // Light: light weight or high reps
+  }
+  
+  // Calculate duration for this set in hours
+  const totalSeconds = (repsNum * SECONDS_PER_REP) + REST_SECONDS;
+  const hours = totalSeconds / 3600;
+  
+  // Calories = MET × body weight (kg) × time (hours)
+  const calories = met * AVERAGE_BODY_WEIGHT * hours;
+  
+  return Math.round(calories * 10) / 10; // Round to 1 decimal place
+};
 
 const LogStrength = () => {
   const [isLoggingStarted, setIsLoggingStarted] = useState(false);
@@ -284,9 +317,15 @@ const StrengthLoggingScreen = ({ activeWorkoutData }: { activeWorkoutData: Activ
       if (ex.id === exerciseId) {
         return {
           ...ex,
-          sets: ex.sets.map(s => 
-            s.id === setId ? { ...s, [field]: value } : s
-          ),
+          sets: ex.sets.map(s => {
+            if (s.id === setId) {
+              const updatedSet = { ...s, [field]: value };
+              // Recalculate calories when weight or reps change
+              updatedSet.calories = calculateSetCalories(updatedSet.weight, updatedSet.reps);
+              return updatedSet;
+            }
+            return s;
+          }),
         };
       }
       return ex;
@@ -294,23 +333,36 @@ const StrengthLoggingScreen = ({ activeWorkoutData }: { activeWorkoutData: Activ
   };
 
   const handleSaveWorkout = async () => {
-    const workoutData = {
+    // Calculate total calories
+    const totalCalories = exercises.reduce((total, ex) => 
+      total + ex.sets.reduce((sum, set) => sum + (set.calories || 0), 0), 0
+    );
+    
+    const completedWorkout = {
+      id: Date.now().toString(),
+      type: 'strength' as const,
       title: workoutTitle,
       duration: timer,
       exercises: exercises,
+      totalCalories: Math.round(totalCalories),
       timestamp: new Date().toISOString(),
     };
-    console.log("Saving workout:", workoutData);
     
-    // Clear active workout from storage
     try {
+      // Save to completed workouts
+      const existingData = await AsyncStorage.getItem(COMPLETED_WORKOUTS_KEY);
+      const completedWorkouts = existingData ? JSON.parse(existingData) : [];
+      completedWorkouts.unshift(completedWorkout); // Add to beginning
+      await AsyncStorage.setItem(COMPLETED_WORKOUTS_KEY, JSON.stringify(completedWorkouts));
+      
+      // Clear active workout from storage
       await AsyncStorage.removeItem(ACTIVE_WORKOUT_KEY);
+      
+      console.log("Workout saved successfully:", completedWorkout);
+      router.back();
     } catch (error) {
-      console.error('Error clearing active workout:', error);
+      console.error('Error saving workout:', error);
     }
-    
-    // TODO: Save to database/state
-    router.back();
   };
 
   const isValidWorkout = workoutTitle.trim().length > 0 && exercises.length > 0;
@@ -483,9 +535,10 @@ const ExerciseCard = ({
       {/* Sets Header */}
       {exercise.sets.length > 0 && (
         <View className="flex-row mb-2 px-2">
-          <Text className="text-gray-500 text-xs font-semibold flex-1">SET</Text>
-          <Text className="text-gray-500 text-xs font-semibold w-24 text-center">WEIGHT (kg)</Text>
-          <Text className="text-gray-500 text-xs font-semibold w-24 text-center">REPS</Text>
+          <Text className="text-gray-500 text-xs font-semibold w-10 text-center">SET</Text>
+          <Text className="text-gray-500 text-xs font-semibold flex-1 text-center">WEIGHT</Text>
+          <Text className="text-gray-500 text-xs font-semibold flex-1 text-center">REPS</Text>
+          <Text className="text-gray-500 text-xs font-semibold flex-1 text-center">KCAL</Text>
           <View className="w-8" />
         </View>
       )}
@@ -493,28 +546,30 @@ const ExerciseCard = ({
       {/* Sets List */}
       {exercise.sets.map((set, setIndex) => (
         <View key={set.id} className="flex-row items-center mb-2">
-          <View className="flex-1 items-center">
-            <View className="w-8 h-8 bg-green-500/20 rounded-full items-center justify-center">
-              <Text className="text-green-500 font-bold">{setIndex + 1}</Text>
-            </View>
+          <View className="w-10 items-center">
+            <Text className="text-green-500 font-bold text-base">{setIndex + 1}</Text>
           </View>
           <TextInput
-            className="w-24 bg-black rounded-lg px-3 py-2 text-white text-center border border-[#2a2a2a]"
+            className="flex-1 bg-black rounded-lg px-2 py-2 text-white text-center border border-[#2a2a2a] mx-1"
             placeholder="0"
             placeholderTextColor="#6b7280"
             keyboardType="decimal-pad"
             value={set.weight}
             onChangeText={(value) => onUpdateSet(set.id, 'weight', value)}
           />
-          <View className="w-3" />
           <TextInput
-            className="w-24 bg-black rounded-lg px-3 py-2 text-white text-center border border-[#2a2a2a]"
+            className="flex-1 bg-black rounded-lg px-2 py-2 text-white text-center border border-[#2a2a2a] mx-1"
             placeholder="0"
             placeholderTextColor="#6b7280"
             keyboardType="number-pad"
             value={set.reps}
             onChangeText={(value) => onUpdateSet(set.id, 'reps', value)}
           />
+          <View className="flex-1 items-center justify-center mx-1">
+            <Text className="text-green-500 font-semibold text-sm">
+              {set.calories ? set.calories.toFixed(1) : '0'}
+            </Text>
+          </View>
           <Pressable onPress={() => onRemoveSet(set.id)} className="w-8 items-center">
             <Ionicons name="close-circle" size={20} color="#6b7280" />
           </Pressable>

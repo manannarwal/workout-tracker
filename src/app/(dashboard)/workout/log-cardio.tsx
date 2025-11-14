@@ -1,8 +1,11 @@
 import { Ionicons } from "@expo/vector-icons";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from "expo-router";
 import React, { useState } from "react";
 import { Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+
+const COMPLETED_WORKOUTS_KEY = '@completed_workouts';
 
 const LogCardio = () => {
   const [activityName, setActivityName] = useState("");
@@ -14,11 +17,30 @@ const LogCardio = () => {
                          distance.trim().length > 0 && 
                          duration.trim().length > 0;
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (isValidWorkout) {
-      // TODO: Save workout to database/state
-      console.log("Saving workout:", { activityName, distance, duration, calories });
-      router.back();
+      const completedWorkout = {
+        id: Date.now().toString(),
+        type: 'cardio' as const,
+        activityName,
+        distance,
+        duration,
+        calories: calories || '0',
+        timestamp: new Date().toISOString(),
+      };
+
+      try {
+        // Save to completed workouts
+        const existingData = await AsyncStorage.getItem(COMPLETED_WORKOUTS_KEY);
+        const completedWorkouts = existingData ? JSON.parse(existingData) : [];
+        completedWorkouts.unshift(completedWorkout); // Add to beginning
+        await AsyncStorage.setItem(COMPLETED_WORKOUTS_KEY, JSON.stringify(completedWorkouts));
+        
+        console.log("Cardio workout saved successfully:", completedWorkout);
+        router.back();
+      } catch (error) {
+        console.error('Error saving cardio workout:', error);
+      }
     }
   };
 

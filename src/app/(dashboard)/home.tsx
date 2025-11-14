@@ -1,9 +1,50 @@
 import { Ionicons } from "@expo/vector-icons";
-import React from "react";
-import { Pressable, ScrollView, Text, View } from "react-native";
+import DateTimePicker from "@react-native-community/datetimepicker";
+import React, { useState } from "react";
+import { Modal, Platform, Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const Home = () => {
+  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [tempDate, setTempDate] = useState(new Date());
+
+  const formatDate = (date: Date) => {
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return `${months[date.getMonth()]} ${date.getDate()}`;
+  };
+
+  const onDateChange = (event: any, date?: Date) => {
+    if (Platform.OS === 'android') {
+      setShowDatePicker(false);
+      if (event.type === 'set' && date) {
+        // User pressed OK on Android
+        setSelectedDate(date);
+      }
+      // If user pressed Cancel, event.type === 'dismissed', do nothing
+    } else {
+      // iOS: just update temp date
+      if (date) {
+        setTempDate(date);
+      }
+    }
+  };
+
+  const handleDatePickerOpen = () => {
+    setTempDate(selectedDate);
+    setShowDatePicker(true);
+  };
+
+  const handleDateConfirm = () => {
+    setSelectedDate(tempDate);
+    setShowDatePicker(false);
+  };
+
+  const handleDateCancel = () => {
+    setTempDate(selectedDate);
+    setShowDatePicker(false);
+  };
+
   return (
     <SafeAreaView edges={['top']} className="flex-1 bg-black">
       <ScrollView 
@@ -17,11 +58,68 @@ const Home = () => {
           </Text>
         </View>
         <View className="flex-row justify-center align-middle ">
-          <Pressable className="flex-row w-3/12 h-10 items-center justify-center bg-[#1a1a1a] rounded-full ">
-            <Ionicons name="calendar-outline" size={24} color="#6b7280" />
-            <Text className="text-[#6b7280]">  Oct 26</Text>
+          <Pressable 
+            onPress={handleDatePickerOpen}
+            className="flex-row items-center justify-center bg-[#1a1a1a] rounded-full px-3 py-2 active:bg-[#2a2a2a]"
+          >
+            <Ionicons name="calendar-outline" size={20} color="#6b7280" />
+            <Text className="text-[#6b7280] ml-2 text-sm font-medium">{formatDate(selectedDate)}</Text>
           </Pressable>
         </View>
+
+        {showDatePicker && Platform.OS === 'android' && (
+          <DateTimePicker
+            value={selectedDate}
+            mode="date"
+            display="default"
+            onChange={onDateChange}
+            maximumDate={new Date()}
+          />
+        )}
+
+        {showDatePicker && Platform.OS === 'ios' && (
+          <Modal
+            visible={true}
+            transparent={true}
+            animationType="fade"
+            onRequestClose={handleDateCancel}
+          >
+            <View className="flex-1 bg-black/70 justify-center items-center">
+              <View className="bg-[#1a1a1a] rounded-3xl p-6 w-[90%] max-w-md border border-[#2a2a2a]">
+                <Text className="text-white text-xl font-bold mb-4 text-center">
+                  Select Date
+                </Text>
+                
+                <View className="items-center justify-center py-4">
+                  <DateTimePicker
+                    value={tempDate}
+                    mode="date"
+                    display="spinner"
+                    onChange={onDateChange}
+                    maximumDate={new Date()}
+                    textColor="#ffffff"
+                    themeVariant="dark"
+                  />
+                </View>
+
+                <View className="flex-row gap-3 mt-6">
+                  <Pressable
+                    onPress={handleDateCancel}
+                    className="flex-1 bg-[#2a2a2a] rounded-xl py-3 items-center active:opacity-80"
+                  >
+                    <Text className="text-gray-400 font-semibold text-base">Cancel</Text>
+                  </Pressable>
+                  <Pressable
+                    onPress={handleDateConfirm}
+                    className="flex-1 bg-green-500 rounded-xl py-3 items-center active:opacity-80"
+                  >
+                    <Text className="text-black font-bold text-base">Confirm</Text>
+                  </Pressable>
+                </View>
+              </View>
+            </View>
+          </Modal>
+        )}
 
         <View className="flex-row gap-3 px-5 mt-4">
           <View className="flex-1 bg-[#1a1a1a] rounded-2xl p-5">
