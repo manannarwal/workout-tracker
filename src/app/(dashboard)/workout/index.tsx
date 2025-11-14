@@ -90,7 +90,7 @@ const WorkoutIndex = () => {
                 <Ionicons 
                   name={type.icon as any} 
                   size={24} 
-                  color="#6b7280"
+                  color="#2ffe4b"
                 />
                 <Text className="mt-2 font-semibold text-gray-400">
                   {type.label}

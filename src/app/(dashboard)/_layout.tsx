@@ -11,7 +11,7 @@ export default function DashboardLayout() {
           backgroundColor: "#000000",
           borderTopColor: "#1a1a1a",
           borderTopWidth: 1,
-          height: 70,
+          height: 90,
           paddingBottom: 10,
           paddingTop: 10,
         },

@@ -42,7 +42,7 @@ const LogCardio = () => {
             <Text className="text-white font-semibold mb-2">Activity Name</Text>
             <TextInput
               className="bg-[#1a1a1a] rounded-xl px-4 py-4 text-white border border-[#2a2a2a]"
-              placeholder="e.g., Morning Run"
+              placeholder="e.g Morning Run"
               placeholderTextColor="#6b7280"
               value={activityName}
               onChangeText={setActivityName}
@@ -51,10 +51,9 @@ const LogCardio = () => {
 
           {/* Distance */}
           <View className="mt-4">
-            <Text className="text-white font-semibold mb-2">Distance (miles)</Text>
+            <Text className="text-white font-semibold mb-2">Distance (km)</Text>
             <TextInput
               className="bg-[#1a1a1a] rounded-xl px-4 py-4 text-white border border-[#2a2a2a]"
-              placeholder="e.g., 3.5"
               placeholderTextColor="#6b7280"
               keyboardType="decimal-pad"
               value={distance}
@@ -67,7 +66,6 @@ const LogCardio = () => {
             <Text className="text-white font-semibold mb-2">Duration (minutes)</Text>
             <TextInput
               className="bg-[#1a1a1a] rounded-xl px-4 py-4 text-white border border-[#2a2a2a]"
-              placeholder="e.g., 30"
               placeholderTextColor="#6b7280"
               keyboardType="number-pad"
               value={duration}
@@ -80,7 +78,6 @@ const LogCardio = () => {
             <Text className="text-white font-semibold mb-2">Calories Burned (optional)</Text>
             <TextInput
               className="bg-[#1a1a1a] rounded-xl px-4 py-4 text-white border border-[#2a2a2a]"
-              placeholder="e.g., 350"
               placeholderTextColor="#6b7280"
               keyboardType="number-pad"
               value={calories}
@@ -88,17 +85,6 @@ const LogCardio = () => {
             />
             <Text className="text-gray-400 text-xs mt-1">
               Leave blank to auto-calculate based on distance and duration
-            </Text>
-          </View>
-
-          {/* Info Card */}
-          <View className="mt-6 bg-green-500/10 rounded-xl p-4 border border-green-500/30">
-            <View className="flex-row items-center mb-2">
-              <Ionicons name="information-circle" size={20} color="#22c55e" />
-              <Text className="text-green-500 font-semibold ml-2">Tip</Text>
-            </View>
-            <Text className="text-gray-300 text-sm">
-              Track your cardio workouts consistently to monitor your progress and reach your fitness goals faster.
             </Text>
           </View>
         </ScrollView>
