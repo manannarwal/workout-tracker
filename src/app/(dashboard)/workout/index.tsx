@@ -33,6 +33,7 @@ interface StrengthWorkout {
 interface CardioWorkout {
   id: string;
   type: "cardio";
+  workoutType?: "walk" | "run" | "ride" | "other"; // Which cardio activity (walk/run/ride)
   activityName: string;
   distance: string;
   duration: string;
@@ -98,9 +99,21 @@ const WorkoutIndex = () => {
     });
   };
 
-  const getWorkoutIcon = (workout: Workout): keyof typeof Ionicons.glyphMap => {
-    if (workout.type === "strength") return "barbell";
-    return "bicycle";
+  const getWorkoutIcon = (workout: Workout): { name: string; library: 'ionicons' | 'material' } => {
+    if (workout.type === "strength") return { name: "barbell", library: "ionicons" };
+    
+    // For cardio, use the workoutType field if available
+    if (workout.workoutType === "walk") return { name: "walk", library: "ionicons" };
+    if (workout.workoutType === "run") return { name: "run-fast", library: "material" };
+    if (workout.workoutType === "ride") return { name: "bicycle", library: "ionicons" };
+    
+    // Fallback: check activity name (for old workouts without workoutType)
+    const activityName = workout.activityName.toLowerCase();
+    if (activityName.includes("walk")) return { name: "walk", library: "ionicons" };
+    if (activityName.includes("run") || activityName.includes("jog")) return { name: "run-fast", library: "material" };
+    if (activityName.includes("ride") || activityName.includes("cycl") || activityName.includes("bike")) return { name: "bicycle", library: "ionicons" };
+    
+    return { name: "help-circle-outline", library: "ionicons" }; // default
   };
 
   const getWorkoutName = (workout: Workout) => {
@@ -339,7 +352,13 @@ const WorkoutIndex = () => {
             {workoutTypes.map((type) => (
               <Pressable
                 key={type.id}
-                onPress={() => router.push(type.route as any)}
+                onPress={() => {
+                  if (type.route === '/workout/log-cardio') {
+                    router.push(`${type.route}?activity=${type.label}&workoutType=${type.id}` as any);
+                  } else {
+                    router.push(type.route as any);
+                  }
+                }}
                 className="w-[31%] py-4 rounded-xl border bg-[#1a1a1a] border-[#2a2a2a] items-center active:bg-green-500/20 active:border-green-500"
               >
                 {type.iconLibrary === "material" ? (
@@ -428,11 +447,22 @@ const WorkoutIndex = () => {
                   className="w-12 h-12 rounded-xl items-center justify-center mr-4"
                   style={{ backgroundColor: "#22c55e33" }}
                 >
-                  <Ionicons
-                    name={getWorkoutIcon(workout)}
-                    size={24}
-                    color="#22c55e"
-                  />
+                  {(() => {
+                    const icon = getWorkoutIcon(workout);
+                    return icon.library === "material" ? (
+                      <MaterialCommunityIcons
+                        name={icon.name as any}
+                        size={24}
+                        color="#22c55e"
+                      />
+                    ) : (
+                      <Ionicons
+                        name={icon.name as any}
+                        size={24}
+                        color="#22c55e"
+                      />
+                    );
+                  })()}
                 </View>
                 <View className="flex-1">
                   <Text className="text-white text-base font-semibold">

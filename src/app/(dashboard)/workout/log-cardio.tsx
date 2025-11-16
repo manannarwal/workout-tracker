@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import React, { useState } from "react";
 import { Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -8,6 +8,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 const COMPLETED_WORKOUTS_KEY = '@completed_workouts';
 
 const LogCardio = () => {
+  const { activity, workoutType } = useLocalSearchParams<{ activity?: string; workoutType?: string }>();
   const [activityName, setActivityName] = useState("");
   const [distance, setDistance] = useState("");
   const [duration, setDuration] = useState("");
@@ -17,15 +18,56 @@ const LogCardio = () => {
                          distance.trim().length > 0 && 
                          duration.trim().length > 0;
 
+  // Calculate calories based on activity type, distance, and duration
+  const calculateCalories = () => {
+    if (!distance || !duration) return 0;
+
+    const distanceKm = parseFloat(distance);
+    const durationMin = parseFloat(duration);
+    
+    if (isNaN(distanceKm) || isNaN(durationMin)) return 0;
+
+    const activityLower = activityName.toLowerCase();
+    let met = 6.0; // Default moderate activity
+    
+    // Determine MET based on activity and pace
+    if (activityLower.includes('walk')) {
+      const paceKmh = (distanceKm / durationMin) * 60;
+      if (paceKmh < 4) met = 3.0; // Slow walk
+      else if (paceKmh < 5.5) met = 3.5; // Moderate walk
+      else met = 5.0; // Brisk walk
+    } else if (activityLower.includes('run') || activityLower.includes('jog')) {
+      const paceKmh = (distanceKm / durationMin) * 60;
+      if (paceKmh < 8) met = 6.0; // Light jog
+      else if (paceKmh < 11) met = 9.0; // Moderate run
+      else met = 11.0; // Fast run
+    } else if (activityLower.includes('ride') || activityLower.includes('cycl') || activityLower.includes('bike')) {
+      const paceKmh = (distanceKm / durationMin) * 60;
+      if (paceKmh < 16) met = 4.0; // Leisure cycling
+      else if (paceKmh < 20) met = 6.8; // Moderate cycling
+      else met = 10.0; // Vigorous cycling
+    }
+
+    // Calories = MET × weight(kg) × time(hours)
+    const weightKg = 70; // Average weight, can be made customizable later
+    const timeHours = durationMin / 60;
+    const calculatedCalories = Math.round(met * weightKg * timeHours);
+    
+    return calculatedCalories;
+  };
+
   const handleSave = async () => {
     if (isValidWorkout) {
+      const finalCalories = calories ? calories : calculateCalories().toString();
+      
       const completedWorkout = {
         id: Date.now().toString(),
         type: 'cardio' as const,
+        workoutType: workoutType as "walk" | "run" | "ride" | "other" | undefined,
         activityName,
         distance,
         duration,
-        calories: calories || '0',
+        calories: finalCalories,
         timestamp: new Date().toISOString(),
       };
 
@@ -106,7 +148,7 @@ const LogCardio = () => {
               onChangeText={setCalories}
             />
             <Text className="text-gray-400 text-xs mt-1">
-              Leave blank to auto-calculate based on distance and duration
+              Leave blank to auto-calculate ({calculateCalories()} kcal estimated)
             </Text>
           </View>
         </ScrollView>

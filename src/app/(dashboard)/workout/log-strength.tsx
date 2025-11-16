@@ -2,7 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
-import { AppState, AppStateStatus, Keyboard, Pressable, ScrollView, Text, TextInput, View } from "react-native";
+import { AppState, AppStateStatus, Keyboard, Modal, Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { EXERCISES_DATABASE } from "../../../constants/exercises";
 
@@ -64,6 +64,7 @@ const calculateSetCalories = (weight: string, reps: string): number => {
 const LogStrength = () => {
   const [isLoggingStarted, setIsLoggingStarted] = useState(false);
   const [activeWorkout, setActiveWorkout] = useState<ActiveWorkoutData | null>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   // Check for active workout on mount
   useEffect(() => {
@@ -104,6 +105,16 @@ const LogStrength = () => {
 
   const handleResumeLogging = () => {
     setIsLoggingStarted(true);
+  };
+
+  const handleDeleteWorkout = async () => {
+    try {
+      await AsyncStorage.removeItem(ACTIVE_WORKOUT_KEY);
+      setShowDeleteConfirm(false);
+      router.back();
+    } catch (error) {
+      console.error('Error deleting workout:', error);
+    }
   };
 
   const formatDuration = (startTime: number) => {
@@ -210,6 +221,7 @@ const StrengthLoggingScreen = ({ activeWorkoutData }: { activeWorkoutData: Activ
   const [timer, setTimer] = useState(0);
   const [isTimerRunning, setIsTimerRunning] = useState(true);
   const [exercises, setExercises] = useState<Exercise[]>(activeWorkoutData?.exercises || []);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   // Calculate elapsed time from start time - always runs
   useEffect(() => {
@@ -365,6 +377,16 @@ const StrengthLoggingScreen = ({ activeWorkoutData }: { activeWorkoutData: Activ
     }
   };
 
+  const handleDeleteWorkout = async () => {
+    try {
+      await AsyncStorage.removeItem(ACTIVE_WORKOUT_KEY);
+      setShowDeleteConfirm(false);
+      router.back();
+    } catch (error) {
+      console.error('Error deleting workout:', error);
+    }
+  };
+
   const isValidWorkout = workoutTitle.trim().length > 0 && exercises.length > 0;
 
   return (
@@ -380,9 +402,14 @@ const StrengthLoggingScreen = ({ activeWorkoutData }: { activeWorkoutData: Activ
               <Ionicons name="timer" size={20} color="#22c55e" />
               <Text className="text-green-500 text-lg font-bold ml-2">{formatTime(timer)}</Text>
             </View>
-            <Pressable onPress={() => setIsTimerRunning(!isTimerRunning)}>
-              <Ionicons name={isTimerRunning ? "pause" : "play"} size={24} color="#22c55e" />
-            </Pressable>
+            <View className="flex-row items-center gap-3">
+              <Pressable onPress={() => setShowDeleteConfirm(true)}>
+                <Ionicons name="trash-outline" size={24} color="#ef4444" />
+              </Pressable>
+              <Pressable onPress={() => setIsTimerRunning(!isTimerRunning)}>
+                <Ionicons name={isTimerRunning ? "pause" : "play"} size={24} color="#22c55e" />
+              </Pressable>
+            </View>
           </View>
 
           {/* Workout Title Input */}
@@ -441,6 +468,43 @@ const StrengthLoggingScreen = ({ activeWorkoutData }: { activeWorkoutData: Activ
             <Text className="text-black font-bold text-lg">Complete Workout</Text>
           </Pressable>
         </View>
+
+        {/* Delete Confirmation Modal */}
+        <Modal
+          visible={showDeleteConfirm}
+          transparent={true}
+          animationType="fade"
+          onRequestClose={() => setShowDeleteConfirm(false)}
+        >
+          <View className="flex-1 bg-black/70 justify-center items-center">
+            <View className="bg-[#1a1a1a] rounded-3xl p-6 w-[85%] max-w-sm border border-[#2a2a2a]">
+              <View className="items-center mb-4">
+                <Ionicons name="warning-outline" size={48} color="#ef4444" />
+              </View>
+              <Text className="text-white text-xl font-bold text-center mb-2">
+                Delete Workout?
+              </Text>
+              <Text className="text-gray-400 text-center mb-6">
+                This will permanently delete your active workout. This action cannot be undone.
+              </Text>
+              
+              <View className="flex-row gap-3">
+                <Pressable
+                  onPress={() => setShowDeleteConfirm(false)}
+                  className="flex-1 bg-[#2a2a2a] rounded-xl py-3 items-center active:opacity-80"
+                >
+                  <Text className="text-gray-400 font-semibold text-base">Cancel</Text>
+                </Pressable>
+                <Pressable
+                  onPress={handleDeleteWorkout}
+                  className="flex-1 bg-red-500 rounded-xl py-3 items-center active:opacity-80"
+                >
+                  <Text className="text-white font-bold text-base">Delete</Text>
+                </Pressable>
+              </View>
+            </View>
+          </View>
+        </Modal>
       </View>
     </SafeAreaView>
   );
