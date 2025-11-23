@@ -274,7 +274,7 @@ const CardioWorkoutDetails = ({ workout }: { workout: CardioWorkout }) => {
               <Ionicons name="navigate" size={20} color="#22c55e" />
               <Text className="text-gray-400 ml-3">Distance</Text>
             </View>
-            <Text className="text-white text-lg font-bold">{workout.distance} miles</Text>
+            <Text className="text-white text-lg font-bold">{workout.distance} km</Text>
           </View>
           
           <View className="flex-row items-center justify-between py-3 border-b border-[#2a2a2a]">

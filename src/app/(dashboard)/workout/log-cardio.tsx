@@ -25,35 +25,85 @@ const LogCardio = () => {
     const distanceKm = parseFloat(distance);
     const durationMin = parseFloat(duration);
     
-    if (isNaN(distanceKm) || isNaN(durationMin)) return 0;
+    if (isNaN(distanceKm) || isNaN(durationMin) || durationMin === 0) return 0;
 
-    const activityLower = activityName.toLowerCase();
-    let met = 6.0; // Default moderate activity
+    // Use workoutType if available, otherwise fall back to activityName
+    const activityType = workoutType || activityName.toLowerCase();
+    const weightKg = 70; // Average weight
     
-    // Determine MET based on activity and pace
-    if (activityLower.includes('walk')) {
-      const paceKmh = (distanceKm / durationMin) * 60;
-      if (paceKmh < 4) met = 3.0; // Slow walk
-      else if (paceKmh < 5.5) met = 3.5; // Moderate walk
-      else met = 5.0; // Brisk walk
-    } else if (activityLower.includes('run') || activityLower.includes('jog')) {
-      const paceKmh = (distanceKm / durationMin) * 60;
-      if (paceKmh < 8) met = 6.0; // Light jog
-      else if (paceKmh < 11) met = 9.0; // Moderate run
-      else met = 11.0; // Fast run
-    } else if (activityLower.includes('ride') || activityLower.includes('cycl') || activityLower.includes('bike')) {
-      const paceKmh = (distanceKm / durationMin) * 60;
-      if (paceKmh < 16) met = 4.0; // Leisure cycling
-      else if (paceKmh < 20) met = 6.8; // Moderate cycling
-      else met = 10.0; // Vigorous cycling
+    // Calculate average speed in km/h
+    const speedKmh = (distanceKm / durationMin) * 60;
+    
+    // === PRIMARY METHOD: Distance-based calculation ===
+    // Formula: calories = coefficient × weight_kg × distance_km
+    // Coefficient represents kcal per kg per km and depends on activity type and speed
+    
+    let coefficient = 1.0; // Default
+    let met = 6.0; // For secondary MET-based check
+    
+    if (activityType.includes('walk')) {
+      if (speedKmh < 4) {
+        coefficient = 0.55; // Slow walk
+        met = 2.5;
+      } else if (speedKmh < 6) {
+        coefficient = 0.70; // Moderate walk (4-6 km/h)
+        met = 3.5;
+      } else {
+        coefficient = 0.85; // Fast walk (>6 km/h)
+        met = 4.5;
+      }
+    } else if (activityType.includes('run') || activityType.includes('jog')) {
+      if (speedKmh < 6) {
+        coefficient = 0.90; // Slow jog (<6 km/h)
+        met = 6.0;
+      } else if (speedKmh < 12) {
+        coefficient = 1.00; // Running (6-12 km/h)
+        met = 10.0;
+      } else if (speedKmh < 14) {
+        coefficient = 1.10; // Fast running (12-14 km/h)
+        met = 11.5;
+      } else {
+        coefficient = 1.35; // Very fast running (>14 km/h)
+        met = 14.0;
+      }
+    } else if (activityType.includes('ride') || activityType.includes('cycl') || activityType.includes('bike')) {
+      if (speedKmh < 15) {
+        coefficient = 0.35; // Slow cycling
+        met = 4.0;
+      } else if (speedKmh < 22) {
+        coefficient = 0.45; // Moderate cycling (15-22 km/h)
+        met = 6.5;
+      } else {
+        coefficient = 0.60; // Fast cycling (>22 km/h)
+        met = 10.0;
+      }
+    } else {
+      // Default for unknown activities
+      coefficient = 0.80;
+      met = 6.0;
     }
 
-    // Calories = MET × weight(kg) × time(hours)
-    const weightKg = 70; // Average weight, can be made customizable later
-    const timeHours = durationMin / 60;
-    const calculatedCalories = Math.round(met * weightKg * timeHours);
+    // Distance-based calories (PRIMARY)
+    const distanceCalories = coefficient * weightKg * distanceKm;
     
-    return calculatedCalories;
+    // === SECONDARY METHOD: MET-based calculation for validation ===
+    // Formula: kcal_per_min = (MET × 3.5 × weight_kg) / 200
+    const caloriesPerMin = (met * 3.5 * weightKg) / 200;
+    const metCalories = caloriesPerMin * durationMin;
+    
+    // Compare both methods - if they differ greatly, average them
+    const percentDifference = Math.abs(distanceCalories - metCalories) / distanceCalories * 100;
+    
+    let finalCalories;
+    if (percentDifference <= 20) {
+      // Methods agree within 20% - use distance-based (more accurate for distance activities)
+      finalCalories = distanceCalories;
+    } else {
+      // Methods differ significantly - use average for safety
+      finalCalories = (distanceCalories + metCalories) / 2;
+    }
+    
+    return Math.round(finalCalories);
   };
 
   const handleSave = async () => {
