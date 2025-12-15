@@ -1,12 +1,72 @@
 import { router } from "expo-router";
 import React, { useState } from "react";
-import { Pressable, Text, View } from "react-native";
+import { ActivityIndicator, Alert, Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useAuth } from "../../contexts/AuthContext";
+import { useOnboarding } from "../../contexts/OnboardingContext";
 
 const gender = () => {
+  const { signUp, updateUser, completeOnboarding } = useAuth();
+  const { onboardingData, clearOnboardingData } = useOnboarding();
   const [selectedGender, setSelectedGender] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const isValidSelection = selectedGender !== null;
+
+  const handleFinish = async () => {
+    if (!isValidSelection || !onboardingData.email || !onboardingData.password) {
+      Alert.alert("Error", "Please complete all onboarding steps");
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      // Create account with email as username
+      const result = await signUp(onboardingData.email, onboardingData.password);
+      
+      if (!result.success) {
+        Alert.alert("Error", result.error || "Failed to create account");
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Save additional profile data to AsyncStorage first
+      const AsyncStorage = require('@react-native-async-storage/async-storage').default;
+      
+      // Create complete profile with onboarding completion
+      const completeUserData = {
+        id: Date.now().toString(),
+        username: onboardingData.email,
+        name: onboardingData.name,
+        email: onboardingData.email,
+        hasCompletedOnboarding: true,
+      };
+      
+      const profileData = {
+        ...completeUserData,
+        dateOfBirth: onboardingData.dateOfBirth,
+        gender: selectedGender,
+      };
+      
+      // Save to all relevant keys
+      await AsyncStorage.setItem('@auth_current_user', JSON.stringify(completeUserData));
+      await AsyncStorage.setItem(`@profile_${onboardingData.email}`, JSON.stringify(completeUserData));
+      await AsyncStorage.setItem('@user_profile', JSON.stringify(profileData));
+
+      // Update the auth context user state
+      await updateUser(completeUserData);
+      
+      // Clear onboarding data from context
+      clearOnboardingData();
+      
+      // Navigate to dashboard
+      router.replace("/(dashboard)/home");
+    } catch (error) {
+      console.error('Error completing onboarding:', error);
+      Alert.alert("Error", "Something went wrong. Please try again.");
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <SafeAreaView className="flex-1 bg-[#0a3117]">
@@ -17,10 +77,11 @@ const gender = () => {
             One Last Step
           </Text>
           <View className="flex-row gap-2 justify-center mt-5 -mx-3">
-            <View className="border-b-4 border-green-500 w-[22%] rounded-xl"></View>
-            <View className="border-b-4 border-green-500 w-[22%] rounded-xl"></View>
-            <View className="border-b-4 border-green-500 w-[22%] rounded-xl"></View>
-            <View className="border-b-4 border-green-500 w-[22%] rounded-xl"></View>
+            <View className="border-b-4 border-green-500 w-[17%] rounded-xl"></View>
+            <View className="border-b-4 border-green-500 w-[17%] rounded-xl"></View>
+            <View className="border-b-4 border-green-500 w-[17%] rounded-xl"></View>
+            <View className="border-b-4 border-green-500 w-[17%] rounded-xl"></View>
+            <View className="border-b-4 border-green-500 w-[17%] rounded-xl"></View>
           </View>
           <View className="mt-8">
             <Text className="text-5xl sm:text-6xl text-white font-bold leading-tight">
@@ -77,14 +138,18 @@ const gender = () => {
         <View className="items-center">
           <Pressable
             className={`rounded-full py-4 w-full max-w-md items-center ${
-              isValidSelection
+              isValidSelection && !isSubmitting
                 ? "bg-green-500 active:opacity-80"
                 : "bg-gray-600 opacity-50"
             }`}
-            onPress={() => isValidSelection && router.replace("/(dashboard)/home")}
-            disabled={!isValidSelection}
+            onPress={handleFinish}
+            disabled={!isValidSelection || isSubmitting}
           >
-            <Text className="text-black font-semibold text-xl">Finish</Text>
+            {isSubmitting ? (
+              <ActivityIndicator color="#000" />
+            ) : (
+              <Text className="text-black font-semibold text-xl">Finish</Text>
+            )}
           </Pressable>
         </View>
       </View>

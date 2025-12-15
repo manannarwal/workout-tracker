@@ -66,6 +66,14 @@ const getstarted = () => {
             </View>
           </Pressable>
         </View>
+
+        <View className="mt-6">
+          <Pressable onPress={() => router.push('/(onboarding)/login')}>
+            <Text className="text-green-400 text-base text-center">
+              Already have an account? <Text className="font-semibold">Login</Text>
+            </Text>
+          </Pressable>
+        </View>
       </View>
     </View>
   );

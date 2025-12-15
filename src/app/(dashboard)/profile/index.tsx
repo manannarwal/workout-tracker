@@ -4,10 +4,12 @@ import { router, useFocusEffect } from "expo-router";
 import React, { useCallback, useState } from "react";
 import { Alert, Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useAuth } from "../../../contexts/AuthContext";
 
 const PROFILE_KEY = "@user_profile";
 
 const Profile = () => {
+  const { signOut, user } = useAuth();
   const [userName, setUserName] = useState("User");
 
   useFocusEffect(
@@ -21,7 +23,9 @@ const Profile = () => {
       const data = await AsyncStorage.getItem(PROFILE_KEY);
       if (data) {
         const profile = JSON.parse(data);
-        setUserName(profile.name || "User");
+        setUserName(profile.name || user?.name || "User");
+      } else if (user?.name) {
+        setUserName(user.name);
       }
     } catch (error) {
       console.error("Error loading profile:", error);
@@ -31,7 +35,13 @@ const Profile = () => {
   const handleLogout = () => {
     Alert.alert("Logout", "Are you sure you want to logout?", [
       { text: "Cancel", style: "cancel" },
-      { text: "Logout", onPress: () => Alert.alert("Logged out", "You have been logged out") },
+      { 
+        text: "Logout", 
+        onPress: async () => {
+          await signOut();
+          router.replace("/(onboarding)/getstarted");
+        }
+      },
     ]);
   };
 
@@ -46,14 +56,60 @@ const Profile = () => {
           style: "destructive",
           onPress: async () => {
             try {
+              const SecureStore = require('expo-secure-store');
+              
+              const sanitizeEmail = (email: string): string => {
+                return email.replace(/[^a-zA-Z0-9._-]/g, '_');
+              };
+              
+              // Get both username and email to delete all variations
+              const emailsToDelete = [];
+              if (user?.email) emailsToDelete.push(user.email.trim().toLowerCase());
+              if (user?.username) emailsToDelete.push(user.username.trim().toLowerCase());
+              
+              console.log('Deleting accounts for:', emailsToDelete);
+              
+              // Delete for each email/username variation
+              for (const email of emailsToDelete) {
+                const sanitizedKey = sanitizeEmail(email);
+                
+                console.log('Deleting SecureStore key:', `cred_${sanitizedKey}`);
+                
+                // Delete password from SecureStore
+                try {
+                  await SecureStore.deleteItemAsync(`cred_${sanitizedKey}`);
+                  console.log('Password deleted from SecureStore');
+                } catch (error) {
+                  console.error('Error deleting from SecureStore:', error);
+                }
+                
+                // Delete profile from AsyncStorage with @ prefix
+                await AsyncStorage.removeItem(`@profile_${email}`);
+                console.log('Profile deleted:', `@profile_${email}`);
+                
+                // Also try without @ prefix (legacy)
+                await AsyncStorage.removeItem(`profile_${email}`);
+              }
+              
+              // Delete all user data from AsyncStorage
               await AsyncStorage.multiRemove([
                 PROFILE_KEY,
                 "@app_settings",
                 "@completed_workouts",
                 "@active_strength_workout",
+                "@consumed_calories",
+                "@auth_current_user",
               ]);
-              Alert.alert("Success", "Account deleted successfully");
+              
+              console.log('All user data deleted');
+              
+              // Sign out the user
+              await signOut();
+              
+              // Navigate to get started
+              router.replace("/(onboarding)/getstarted");
             } catch (error) {
+              console.error('Error deleting account:', error);
               Alert.alert("Error", "Failed to delete account");
             }
           },
@@ -63,7 +119,7 @@ const Profile = () => {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-black">
+    <SafeAreaView edges={['top']} className="flex-1 bg-black">
       <ScrollView className="flex-1 bg-black" showsVerticalScrollIndicator={false}>
         {/* Header */}
         <View className="px-5 pt-4 pb-6">

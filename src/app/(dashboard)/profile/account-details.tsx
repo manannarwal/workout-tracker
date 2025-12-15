@@ -4,10 +4,12 @@ import { router, useFocusEffect } from "expo-router";
 import React, { useCallback, useState } from "react";
 import { Modal, Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useAuth } from "../../../contexts/AuthContext";
 
 const PROFILE_KEY = "@user_profile";
 
 const AccountDetails = () => {
+  const { user } = useAuth();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [showEditModal, setShowEditModal] = useState(false);
@@ -26,8 +28,11 @@ const AccountDetails = () => {
       const data = await AsyncStorage.getItem(PROFILE_KEY);
       if (data) {
         const profile = JSON.parse(data);
-        setName(profile.name || "");
-        setEmail(profile.email || "");
+        setName(profile.name || user?.name || "");
+        setEmail(profile.email || user?.email || "");
+      } else if (user) {
+        setName(user.name || "");
+        setEmail(user.email || "");
       }
     } catch (error) {
       console.error("Error loading data:", error);
@@ -61,7 +66,7 @@ const AccountDetails = () => {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-black">
+    <SafeAreaView edges={['top']} className="flex-1 bg-black">
       <ScrollView className="flex-1 bg-black" showsVerticalScrollIndicator={false}>
         {/* Header */}
         <View className="flex-row items-center px-5 pt-4 pb-6">

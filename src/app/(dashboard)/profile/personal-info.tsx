@@ -332,7 +332,7 @@ const PersonalInfo = () => {
   }, [showSliderModal, heightUnit, weightUnit]);
 
   return (
-    <SafeAreaView className="flex-1 bg-black">
+    <SafeAreaView edges={['top']} className="flex-1 bg-black">
       <ScrollView className="flex-1 bg-black" showsVerticalScrollIndicator={false}>
         {/* Header */}
         <View className="flex-row items-center px-5 pt-4 pb-6">

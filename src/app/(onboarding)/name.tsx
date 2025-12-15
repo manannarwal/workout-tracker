@@ -2,11 +2,20 @@ import { router } from "expo-router";
 import React, { useState } from "react";
 import { Pressable, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useOnboarding } from "../../contexts/OnboardingContext";
 
 const name = () => {
+  const { updateOnboardingData } = useOnboarding();
   const [userName, setUserName] = useState("");
   
   const isValidName = userName.trim().length >= 2 && /^[a-zA-Z\s]+$/.test(userName.trim());
+  
+  const handleNext = () => {
+    if (isValidName) {
+      updateOnboardingData({ name: userName.trim() });
+      router.push("/(onboarding)/mail");
+    }
+  };
   
   return (
     <SafeAreaView className="flex-1 bg-[#0a3117]">
@@ -16,10 +25,11 @@ const name = () => {
             Let's Get Started
           </Text>
           <View className="flex-row gap-2 justify-center mt-5 -mx-3">
-            <View className="border-b-4 border-green-500 w-[22%] rounded-xl"></View>
-            <View className="border-b-4 border-white w-[22%] rounded-xl"></View>
-            <View className="border-b-4 border-white w-[22%] rounded-xl"></View>
-            <View className="border-b-4 border-white w-[22%] rounded-xl"></View>
+            <View className="border-b-4 border-green-500 w-[17%] rounded-xl"></View>
+            <View className="border-b-4 border-white w-[17%] rounded-xl"></View>
+            <View className="border-b-4 border-white w-[17%] rounded-xl"></View>
+            <View className="border-b-4 border-white w-[17%] rounded-xl"></View>
+            <View className="border-b-4 border-white w-[17%] rounded-xl"></View>
           </View>
           <View className="mt-8">
             <Text className="text-5xl sm:text-6xl text-white font-bold leading-tight">
@@ -51,7 +61,7 @@ const name = () => {
                 ? 'bg-green-500 active:opacity-80' 
                 : 'bg-gray-600 opacity-50'
             }`}
-            onPress={() => isValidName && router.push("/(onboarding)/mail")}
+            onPress={handleNext}
             disabled={!isValidName}
           >
             <Text className="text-black font-semibold text-xl">

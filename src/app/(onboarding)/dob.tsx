@@ -2,8 +2,10 @@ import { router } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useOnboarding } from "../../contexts/OnboardingContext";
 
 const dob = () => {
+  const { updateOnboardingData } = useOnboarding();
   const [selectedDay, setSelectedDay] = useState(15);
   const [selectedMonth, setSelectedMonth] = useState(5);
   const [selectedYear, setSelectedYear] = useState(2000);
@@ -75,10 +77,11 @@ const dob = () => {
             Almost There
           </Text>
           <View className="flex-row gap-2 justify-center mt-5 -mx-3">
-            <View className="border-b-4 border-green-500 w-[22%] rounded-xl"></View>
-            <View className="border-b-4 border-green-500 w-[22%] rounded-xl"></View>
-            <View className="border-b-4 border-green-500 w-[22%] rounded-xl"></View>
-            <View className="border-b-4 border-white w-[22%] rounded-xl"></View>
+            <View className="border-b-4 border-green-500 w-[17%] rounded-xl"></View>
+            <View className="border-b-4 border-green-500 w-[17%] rounded-xl"></View>
+            <View className="border-b-4 border-green-500 w-[17%] rounded-xl"></View>
+            <View className="border-b-4 border-green-500 w-[17%] rounded-xl"></View>
+            <View className="border-b-4 border-white w-[17%] rounded-xl"></View>
           </View>
           <View className="mt-8">
             <Text className="text-5xl sm:text-6xl text-white font-bold leading-tight">
@@ -193,7 +196,13 @@ const dob = () => {
                 ? 'bg-green-500 active:opacity-80' 
                 : 'bg-gray-600 opacity-50'
             }`}
-            onPress={() => isValidAge && router.push("/(onboarding)/gender")}
+            onPress={() => {
+              if (isValidAge) {
+                const dob = `${selectedYear}-${String(selectedMonth + 1).padStart(2, '0')}-${String(selectedDay).padStart(2, '0')}`;
+                updateOnboardingData({ dateOfBirth: dob });
+                router.push("/(onboarding)/gender");
+              }
+            }}
             disabled={!isValidAge}
           >
             <Text className="text-black font-semibold text-xl">
